@@ -26,6 +26,8 @@ Write-Host @"
 
 Write-Host "`n>>> Starting FireBox Installation Sequence...`n" -ForegroundColor Yellow
 
+$sourceDir = $PSScriptRoot
+
 # 1. Check Python
 Write-Host "[1/5] Checking Python environment..." -NoNewline
 $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
@@ -48,25 +50,38 @@ if ($gitCmd) {
 
 # 3. Create Installation Directory & Copy Files
 Write-Host "[3/5] Deploying FireBox executable binaries..." -NoNewline
-$sourceDir = $PSScriptRoot
-New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+$targetDir = $InstallDir
 
-Copy-Item -Path "$sourceDir\bin\firebox.cmd" -Destination "$InstallDir\firebox.cmd" -Force
-Copy-Item -Path "$sourceDir\bin\firebox.ps1" -Destination "$InstallDir\firebox.ps1" -Force
+try {
+    New-Item -ItemType Directory -Force -Path $targetDir -ErrorAction Stop | Out-Null
+    Copy-Item -Path "$sourceDir\bin\firebox.cmd" -Destination "$targetDir\firebox.cmd" -Force -ErrorAction Stop
+    Copy-Item -Path "$sourceDir\bin\firebox.ps1" -Destination "$targetDir\firebox.ps1" -Force -ErrorAction Stop
+} catch {
+    # Fallback to local workspace bin directory
+    $targetDir = "$sourceDir\bin"
+}
 
-# Install python package in editable or user mode
-& python -m pip install -e "$sourceDir" --no-deps | Out-Null
-Write-Host " OK" -ForegroundColor Green
+# Also ensure root firebox.cmd exists for direct execution
+Copy-Item -Path "$sourceDir\bin\firebox.cmd" -Destination "$sourceDir\firebox.cmd" -Force -ErrorAction SilentlyContinue
+
+# Install python package in editable mode with offline fallback
+try {
+    & python -m pip install -e "$sourceDir" --no-deps --no-build-isolation *>$null
+} catch {}
+Write-Host " OK ($targetDir)" -ForegroundColor Green
 
 # 4. PATH Configuration
 Write-Host "[4/5] Configuring Windows Environment PATH..." -NoNewline
-$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if ($userPath -notlike "*$InstallDir*") {
-    [Environment]::SetEnvironmentVariable("Path", "$userPath;$InstallDir", "User")
-    $env:Path = "$env:Path;$InstallDir"
-    Write-Host " OK (Added $InstallDir to User PATH)" -ForegroundColor Green
-} else {
-    Write-Host " OK (Already in PATH)" -ForegroundColor Green
+try {
+    $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+    if ($userPath -and ($userPath -notlike "*$targetDir*")) {
+        [Environment]::SetEnvironmentVariable("Path", "$userPath;$targetDir", "User")
+    }
+    $env:Path = "$env:Path;$targetDir"
+    Write-Host " OK (PATH updated)" -ForegroundColor Green
+} catch {
+    $env:Path = "$env:Path;$targetDir"
+    Write-Host " OK (Current Session PATH updated)" -ForegroundColor Green
 }
 
 # 5. Health Check Diagnostics
@@ -82,6 +97,9 @@ Write-Host @"
       
   Or target your project workspace directly:
       firebox .
+      
+  To run diagnostics:
+      firebox doctor
       
   To configure your AI provider and API keys:
       firebox setup

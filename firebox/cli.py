@@ -435,26 +435,38 @@ def cmd_version():
 
 
 @main.command("setup")
-def cmd_setup():
+@click.option("--provider", "-p", "provider_arg", default=None, help="AI provider name to configure.")
+@click.option("--key", "-k", "key_arg", default=None, help="API key for the selected provider.")
+def cmd_setup(provider_arg, key_arg):
     """Interactive wizard to configure default providers and API keys."""
     console = get_console()
     config_mgr = get_config()
 
     console.print(f"[bold {COLOR_FIRE_GOLD}]🔥 FireBox Setup Wizard 🔥[/]\n")
-    provider_choice = click.prompt(
-        "Choose primary AI provider",
-        type=click.Choice(["openai", "anthropic", "gemini", "openrouter", "groq", "deepseek", "ollama", "mock"]),
-        default="openai",
-    )
+    if provider_arg:
+        provider_choice = provider_arg.lower()
+    else:
+        provider_choice = click.prompt(
+            "Choose primary AI provider",
+            type=click.Choice(["openai", "anthropic", "gemini", "openrouter", "groq", "deepseek", "ollama", "mock"]),
+            default="openai",
+        )
 
-    key = ""
-    if provider_choice not in ("ollama", "mock"):
+    key = key_arg
+    if key is None and provider_choice not in ("ollama", "mock"):
         key = click.prompt(f"Enter API Key for {provider_choice} (or press Enter to skip)", default="", hide_input=True)
 
     if key:
         config_mgr.credentials.set_key(provider_choice, key)
 
     config_mgr.app_config.active_provider = provider_choice
+    reg = get_provider_registry()
+    try:
+        prov = reg.get_provider(provider_choice)
+        config_mgr.app_config.active_model = prov.default_model
+    except Exception:
+        pass
+
     config_mgr.save_app_config()
     console.print(f"[bold {COLOR_SUCCESS}]✔ FireBox configured with {provider_choice}![/]")
 
