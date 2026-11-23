@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     FireBox Automated Installer for Windows 10 & 11
 .DESCRIPTION
