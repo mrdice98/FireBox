@@ -1,0 +1,321 @@
+{
+  "openai": {
+    "name": "OpenAI",
+    "provider_type": "openai",
+    "api_key": null,
+    "base_url": null,
+    "organization": null,
+    "enabled": true,
+    "default_model": "gpt-4o",
+    "models": [
+      {
+        "id": "gpt-4o",
+        "name": "GPT-4o (Omni)",
+        "provider": "openai",
+        "context_window": 128000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": false,
+        "is_default": true,
+        "extra_params": {}
+      },
+      {
+        "id": "gpt-4o-mini",
+        "name": "GPT-4o Mini",
+        "provider": "openai",
+        "context_window": 128000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": false,
+        "is_default": false,
+        "extra_params": {}
+      },
+      {
+        "id": "o1",
+        "name": "o1 (Reasoning)",
+        "provider": "openai",
+        "context_window": 200000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": true,
+        "is_default": false,
+        "extra_params": {}
+      },
+      {
+        "id": "o3-mini",
+        "name": "o3-mini (High-speed Reasoning)",
+        "provider": "openai",
+        "context_window": 200000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": true,
+        "is_default": false,
+        "extra_params": {}
+      }
+    ]
+  },
+  "anthropic": {
+    "name": "Anthropic",
+    "provider_type": "anthropic",
+    "api_key": null,
+    "base_url": null,
+    "organization": null,
+    "enabled": true,
+    "default_model": "claude-3-7-sonnet",
+    "models": [
+      {
+        "id": "claude-3-7-sonnet",
+        "name": "Claude 3.7 Sonnet (Hybrid Reasoning)",
+        "provider": "anthropic",
+        "context_window": 200000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": true,
+        "is_default": true,
+        "extra_params": {}
+      },
+      {
+        "id": "claude-3-5-sonnet",
+        "name": "Claude 3.5 Sonnet",
+        "provider": "anthropic",
+        "context_window": 200000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": false,
+        "is_default": false,
+        "extra_params": {}
+      },
+      {
+        "id": "claude-3-5-haiku",
+        "name": "Claude 3.5 Haiku",
+        "provider": "anthropic",
+        "context_window": 200000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": false,
+        "is_default": false,
+        "extra_params": {}
+      }
+    ]
+  },
+  "gemini": {
+    "name": "Google Gemini",
+    "provider_type": "gemini",
+    "api_key": null,
+    "base_url": null,
+    "organization": null,
+    "enabled": true,
+    "default_model": "gemini-2.0-flash",
+    "models": [
+      {
+        "id": "gemini-2.0-flash",
+        "name": "Gemini 2.0 Flash",
+        "provider": "gemini",
+        "context_window": 1000000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": false,
+        "is_default": true,
+        "extra_params": {}
+      },
+      {
+        "id": "gemini-2.0-pro-exp-02-05",
+        "name": "Gemini 2.0 Pro",
+        "provider": "gemini",
+        "context_window": 2000000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": false,
+        "is_default": false,
+        "extra_params": {}
+      },
+      {
+        "id": "gemini-1.5-pro",
+        "name": "Gemini 1.5 Pro",
+        "provider": "gemini",
+        "context_window": 2000000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": false,
+        "is_default": false,
+        "extra_params": {}
+      }
+    ]
+  },
+  "openrouter": {
+    "name": "OpenRouter",
+    "provider_type": "openrouter",
+    "api_key": null,
+    "base_url": "https://openrouter.ai/api/v1",
+    "organization": null,
+    "enabled": true,
+    "default_model": "anthropic/claude-3.7-sonnet",
+    "models": [
+      {
+        "id": "anthropic/claude-3.7-sonnet",
+        "name": "Claude 3.7 Sonnet (OpenRouter)",
+        "provider": "openrouter",
+        "context_window": 200000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": false,
+        "is_default": true,
+        "extra_params": {}
+      },
+      {
+        "id": "openai/gpt-4o",
+        "name": "GPT-4o (OpenRouter)",
+        "provider": "openrouter",
+        "context_window": 128000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": false,
+        "is_default": false,
+        "extra_params": {}
+      },
+      {
+        "id": "deepseek/deepseek-r1",
+        "name": "DeepSeek R1 (OpenRouter)",
+        "provider": "openrouter",
+        "context_window": 128000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": true,
+        "is_default": false,
+        "extra_params": {}
+      }
+    ]
+  },
+  "groq": {
+    "name": "Groq",
+    "provider_type": "groq",
+    "api_key": null,
+    "base_url": "https://api.groq.com/openai/v1",
+    "organization": null,
+    "enabled": true,
+    "default_model": "llama-3.3-70b-versatile",
+    "models": [
+      {
+        "id": "llama-3.3-70b-versatile",
+        "name": "Llama 3.3 70B (Groq LPU)",
+        "provider": "groq",
+        "context_window": 128000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": false,
+        "is_default": true,
+        "extra_params": {}
+      },
+      {
+        "id": "deepseek-r1-distill-llama-70b",
+        "name": "DeepSeek R1 Distill 70B",
+        "provider": "groq",
+        "context_window": 128000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": true,
+        "is_default": false,
+        "extra_params": {}
+      }
+    ]
+  },
+  "deepseek": {
+    "name": "DeepSeek",
+    "provider_type": "deepseek",
+    "api_key": null,
+    "base_url": "https://api.deepseek.com",
+    "organization": null,
+    "enabled": true,
+    "default_model": "deepseek-chat",
+    "models": [
+      {
+        "id": "deepseek-chat",
+        "name": "DeepSeek V3",
+        "provider": "deepseek",
+        "context_window": 64000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": false,
+        "is_default": true,
+        "extra_params": {}
+      },
+      {
+        "id": "deepseek-reasoner",
+        "name": "DeepSeek R1",
+        "provider": "deepseek",
+        "context_window": 64000,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": true,
+        "is_default": false,
+        "extra_params": {}
+      }
+    ]
+  },
+  "ollama": {
+    "name": "Ollama (Local)",
+    "provider_type": "ollama",
+    "api_key": null,
+    "base_url": "http://localhost:11434/v1",
+    "organization": null,
+    "enabled": true,
+    "default_model": "llama3.1:latest",
+    "models": [
+      {
+        "id": "llama3.1:latest",
+        "name": "Llama 3.1 (Local)",
+        "provider": "ollama",
+        "context_window": 32768,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": false,
+        "is_default": true,
+        "extra_params": {}
+      },
+      {
+        "id": "qwen2.5-coder:latest",
+        "name": "Qwen 2.5 Coder (Local)",
+        "provider": "ollama",
+        "context_window": 32768,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": false,
+        "is_default": false,
+        "extra_params": {}
+      },
+      {
+        "id": "deepseek-r1:latest",
+        "name": "DeepSeek R1 (Local)",
+        "provider": "ollama",
+        "context_window": 32768,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": true,
+        "is_default": false,
+        "extra_params": {}
+      }
+    ]
+  },
+  "lmstudio": {
+    "name": "LM Studio (Local)",
+    "provider_type": "lmstudio",
+    "api_key": null,
+    "base_url": "http://localhost:1234/v1",
+    "organization": null,
+    "enabled": true,
+    "default_model": "local-model",
+    "models": [
+      {
+        "id": "local-model",
+        "name": "Loaded Model (LM Studio)",
+        "provider": "lmstudio",
+        "context_window": 32768,
+        "supports_tools": true,
+        "supports_vision": true,
+        "supports_reasoning": false,
+        "is_default": true,
+        "extra_params": {}
+      }
+    ]
+  }
+}

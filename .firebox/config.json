@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "active_provider": "mock",
+  "active_model": "firebox-sim-1.0",
+  "animation_mode": "cinematic",
+  "theme": "fire",
+  "max_agent_iterations": 30,
+  "auto_compact_context": true,
+  "context_token_limit": 100000,
+  "audit_logging": true,
+  "telemetry_enabled": false
+}

@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "firebox-ai"
+version = "1.0.0"
+description = "FireBox — The Next-Generation AI Coding Agent. Ignite Your Code. Burn Through Tasks."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "FireBox AI Team", email = "dev@firebox.ai" }
+]
+keywords = [
+    "ai", "coding-agent", "developer-tools", "cli", "tui",
+    "autonomous-agent", "code-generation", "firebox"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Build Tools",
+]
+dependencies = [
+    "click>=8.1.0",
+    "rich>=13.0.0",
+    "prompt_toolkit>=3.0.36",
+    "pydantic>=2.0.0",
+    "httpx>=0.25.0",
+    "colorama>=0.4.6",
+]
+
+[project.optional-dependencies]
+all = [
+    "openai>=1.0.0",
+    "anthropic>=0.18.0",
+    "google-genai>=0.1.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[project.scripts]
+firebox = "firebox.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["firebox*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
