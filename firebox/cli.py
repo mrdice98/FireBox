@@ -18,6 +18,11 @@ from firebox.version import VERSION, CODENAME
 from firebox import __tagline__
 from firebox.ui.theme import (
     get_console,
+    COLOR_ORANGE,
+    COLOR_BLUE,
+    COLOR_BORDER,
+    COLOR_GRAY,
+    COLOR_GRAY_LIGHT,
     COLOR_FIRE_FLAME,
     COLOR_FIRE_GOLD,
     COLOR_FIRE_YELLOW,
@@ -158,13 +163,53 @@ def run_interactive_repl(workspace_root: Path, session_id: Optional[str] = None)
 
                 elif cmd == "/provider":
                     if arg:
-                        try:
-                            provider_reg.set_active_provider(arg)
-                            console.print(f"[bold {COLOR_SUCCESS}]✔ Active provider set to:[/] [bold cyan]{arg}[/]")
-                        except Exception as e:
-                            console.print(f"[bold {COLOR_ERROR}]✖ {e}[/]")
+                        resolved = provider_reg.resolve_provider_choice(arg)
+                        if resolved:
+                            try:
+                                provider_reg.set_active_provider(resolved)
+                                prov = provider_reg.get_provider(resolved)
+                                catalog = provider_reg.get_catalog()
+                                meta = next((c for c in catalog if c["id"] == resolved), None)
+                                idx_str = f"#{meta['index']} · " if meta else ""
+                                console.print(f"[bold {COLOR_SUCCESS}]✔ Active provider set to:[/] [bold white]{prov.name}[/] [dim]({idx_str}{resolved})[/] [bold {COLOR_FIRE_GOLD}](Model: {prov.default_model})[/]")
+                            except Exception as e:
+                                console.print(f"[bold {COLOR_ERROR}]✖ {e}[/]")
+                        else:
+                            console.print(f"[bold {COLOR_ERROR}]✖ Unknown provider '{arg}'. Type [bold cyan]/providers[/] to view the numbered catalog (1-{len(provider_reg.get_catalog())}).[/]")
                     else:
-                        console.print("[yellow]Usage: /provider <name> (e.g. /provider anthropic, /provider gemini, /provider openai)[/]")
+                        _list_providers(console, provider_reg)
+                        console.print(f"[dim]Tip: Switch instantly with [bold cyan]/provider <number>[/] (e.g. [bold]/provider 1[/] for OpenAI, [bold]/provider 2[/] for Anthropic, [bold]/provider 7[/] for Perplexity)[/]")
+
+                elif cmd in ("/setup", "/key"):
+                    _list_providers(console, provider_reg)
+                    catalog = provider_reg.get_catalog()
+                    choice = click.prompt(
+                        f"Select AI Provider by Number (1-{len(catalog)}) or name",
+                        default="1",
+                    )
+                    resolved = provider_reg.resolve_provider_choice(choice)
+                    if resolved:
+                        meta = next((c for c in catalog if c["id"] == resolved), None)
+                        p_name = meta["name"] if meta else resolved.capitalize()
+                        p_idx = meta["index"] if meta else None
+                        d_model = meta.get("default_model", "default") if meta else "default"
+                        req_key = meta.get("requires_key", True) if meta else True
+
+                        if req_key:
+                            console.print(f"[dim {COLOR_GRAY_LIGHT}]Paste or enter your API key below. It will visibly show on screen where you enter it.[/]")
+                            in_key = click.prompt(f"Enter API Key for {p_name}", default="", hide_input=False)
+                            if in_key:
+                                config_mgr.credentials.set_key(resolved, in_key)
+                                _display_key_confirmation_card(console, p_name, resolved, p_idx, in_key, d_model)
+                            else:
+                                console.print("[yellow]No key entered.[/]")
+                        else:
+                            console.print(f"[bold {COLOR_SUCCESS}]✔ {p_name} is ready (offline/local, no API key required).[/]")
+
+                        provider_reg.set_active_provider(resolved)
+                        console.print(f"[bold {COLOR_SUCCESS}]✔ Switched active provider to:[/] [bold white]{p_name}[/] [dim]({resolved})[/]")
+                    else:
+                        console.print(f"[bold {COLOR_ERROR}]✖ Unknown provider selection: {choice}[/]")
 
                 elif cmd == "/tools":
                     _list_tools(console, tool_reg)
@@ -279,20 +324,68 @@ def _list_models(console, provider_reg):
     console.print(Panel(table, title=f"Models for {prov.name}", border_style=COLOR_FIRE_FLAME))
 
 
-def _list_providers(console, provider_reg):
-    providers = provider_reg.list_all_providers()
-    table = Table(box=ROUNDED, border_style=COLOR_FIRE_FLAME, expand=True)
-    table.add_column("ID", style=f"bold {COLOR_FIRE_GOLD}")
-    table.add_column("Provider Name", style="white")
-    table.add_column("Default Model", style="cyan")
-    table.add_column("Configured", justify="center")
-    table.add_column("Active", justify="center")
+def _display_key_confirmation_card(
+    console,
+    provider_name: str,
+    provider_id: str,
+    index_num: Optional[int],
+    key: str,
+    default_model: str,
+):
+    """Render a dedicated, visible API key confirmation card confirming key was added."""
+    idx_str = f"#{index_num} · " if index_num else ""
+    table = Table.grid(padding=(0, 2))
+    table.add_column("Property", style=f"bold {COLOR_GRAY_LIGHT}", width=16)
+    table.add_column("Value", style="bold white")
+    table.add_row("Provider:", f"[bold {COLOR_ORANGE}]{provider_name}[/] [dim]({idx_str}{provider_id})[/]")
+    table.add_row("Entered API Key:", f"[bold {COLOR_BLUE}]{key}[/]")
+    table.add_row("Default Model:", f"[cyan]{default_model}[/]")
+    table.add_row("Storage Target:", f"[dim]Secure Storage (~/.firebox/credentials.dat)[/]")
+    table.add_row("Status:", f"[bold {COLOR_SUCCESS}]✔ REGISTERED & ACTIVE[/]")
 
-    for p in providers:
-        conf_str = f"[bold {COLOR_SUCCESS}]YES[/]" if p["configured"] else f"[dim {COLOR_ASH}]NO[/]"
-        active_str = f"[bold {COLOR_FIRE_FLAME}]★ ACTIVE[/]" if p["is_active"] else ""
-        table.add_row(p["id"], p["name"], p["default_model"], conf_str, active_str)
-    console.print(Panel(table, title="Registered AI Providers", border_style=COLOR_FIRE_FLAME))
+    console.print(Panel(
+        table,
+        title=f"[bold {COLOR_BLUE}]🔑 API Credential Registered[/]",
+        subtitle=f"[dim]Input verified & saved securely[/]",
+        border_style=COLOR_BLUE,
+        expand=False,
+    ))
+
+
+def _list_providers(console, provider_reg):
+    catalog = provider_reg.get_catalog()
+    all_provs = {p["id"]: p for p in provider_reg.list_all_providers()}
+
+    table = Table(box=ROUNDED, border_style=COLOR_BORDER)
+    table.add_column("#", style=f"bold {COLOR_ORANGE}", justify="center", width=5)
+    table.add_column("Provider Name", style="bold white", width=18)
+    table.add_column("ID", style=f"dim {COLOR_GRAY_LIGHT}", width=11)
+    table.add_column("Default Model", style="cyan", width=22)
+    table.add_column("Status", justify="center", width=11)
+
+    for cat in catalog:
+        idx = cat["index"]
+        p_id = cat["id"]
+        p_info = all_provs.get(p_id, {})
+        is_configured = p_info.get("configured", False)
+        is_active = p_info.get("is_active", False)
+
+        if not cat.get("requires_key", True):
+            key_status = f"[dim]OFFLINE[/]"
+        elif is_configured:
+            key_status = f"[bold {COLOR_SUCCESS}]CONFIGURED[/]"
+        else:
+            key_status = f"[dim {COLOR_ASH}]NOT SET[/]"
+
+        num_str = f"★{idx:02d}" if is_active else f"[{idx:02d}]"
+        table.add_row(num_str, cat["name"], p_id, cat["default_model"][:22], key_status)
+
+    console.print(Panel(
+        table,
+        title=f"[bold {COLOR_ORANGE}]🔥 Registered AI Providers (1-{len(catalog)})[/]",
+        subtitle=f"[dim]Choose by number: firebox setup, firebox provider add <#>, or /provider <#>[/]",
+        border_style=COLOR_BORDER,
+    ))
 
 
 def _list_tools(console, tool_reg):
@@ -435,40 +528,80 @@ def cmd_version():
 
 
 @main.command("setup")
-@click.option("--provider", "-p", "provider_arg", default=None, help="AI provider name to configure.")
+@click.option("--provider", "-p", "provider_arg", default=None, help="AI provider number (1-19) or name.")
 @click.option("--key", "-k", "key_arg", default=None, help="API key for the selected provider.")
 def cmd_setup(provider_arg, key_arg):
-    """Interactive wizard to configure default providers and API keys."""
+    """Interactive wizard to configure AI providers by number and plug in API keys."""
     console = get_console()
     config_mgr = get_config()
+    reg = get_provider_registry()
+    catalog = reg.get_catalog()
 
-    console.print(f"[bold {COLOR_FIRE_GOLD}]🔥 FireBox Setup Wizard 🔥[/]\n")
-    if provider_arg:
-        provider_choice = provider_arg.lower()
+    console.print(Panel(
+        f"[bold {COLOR_ORANGE}]🔥 FireBox AI Provider & API Key Setup Wizard 🔥[/]\n"
+        f"[dim {COLOR_GRAY_LIGHT}]Select your preferred provider by Number (1-{len(catalog)}) and plug in your API key with visible confirmation.[/]",
+        border_style=COLOR_BORDER,
+    ))
+
+    # Display numbered table if user didn't pass provider argument
+    if not provider_arg:
+        _list_providers(console, reg)
+        choice = click.prompt(
+            f"Select AI Provider by Number (1-{len(catalog)}) or name",
+            default="1",
+        )
     else:
-        provider_choice = click.prompt(
-            "Choose primary AI provider",
-            type=click.Choice(["openai", "anthropic", "gemini", "openrouter", "groq", "deepseek", "ollama", "mock"]),
-            default="openai",
+        choice = provider_arg
+
+    # Resolve selection by number or name
+    resolved_id = reg.resolve_provider_choice(str(choice))
+    if not resolved_id:
+        console.print(f"[bold {COLOR_ERROR}]✖ Unknown provider selection '{choice}'. Defaulting to OpenAI (#1).[/]")
+        resolved_id = "openai"
+
+    prov_meta = next((c for c in catalog if c["id"] == resolved_id), None)
+    prov_name = prov_meta["name"] if prov_meta else resolved_id.capitalize()
+    prov_index = prov_meta["index"] if prov_meta else None
+    requires_key = prov_meta.get("requires_key", True) if prov_meta else True
+    default_model = prov_meta.get("default_model", "default") if prov_meta else "default"
+
+    console.print(f"\n[bold {COLOR_SUCCESS}]✔ Selected Provider:[/] [bold white]{prov_name}[/] [dim]({resolved_id})[/] — Provider #{prov_index}\n")
+
+    # API Key handling with visible entry (hide_input=False)
+    key = key_arg
+    if key is None and requires_key:
+        console.print(f"[dim {COLOR_GRAY_LIGHT}]Paste or enter your API key below. The key will be visibly shown where you enter it:[/]")
+        key = click.prompt(
+            f"Enter API Key for {prov_name} (press Enter to skip)",
+            default="",
+            hide_input=False,
         )
 
-    key = key_arg
-    if key is None and provider_choice not in ("ollama", "mock"):
-        key = click.prompt(f"Enter API Key for {provider_choice} (or press Enter to skip)", default="", hide_input=True)
-
     if key:
-        config_mgr.credentials.set_key(provider_choice, key)
+        config_mgr.credentials.set_key(resolved_id, key)
+        _display_key_confirmation_card(
+            console=console,
+            provider_name=prov_name,
+            provider_id=resolved_id,
+            index_num=prov_index,
+            key=key,
+            default_model=default_model,
+        )
+    elif not requires_key:
+        console.print(f"[bold {COLOR_SUCCESS}]✔ Provider {prov_name} is ready (offline/local, no API key required).[/]")
+    else:
+        console.print(f"[yellow]No API key entered. You can add one anytime with: [bold cyan]firebox provider add {prov_index}[/][/]")
 
-    config_mgr.app_config.active_provider = provider_choice
-    reg = get_provider_registry()
+    # Update active configuration
+    config_mgr.app_config.active_provider = resolved_id
     try:
-        prov = reg.get_provider(provider_choice)
+        prov = reg.get_provider(resolved_id)
         config_mgr.app_config.active_model = prov.default_model
     except Exception:
-        pass
+        config_mgr.app_config.active_model = default_model
 
     config_mgr.save_app_config()
-    console.print(f"[bold {COLOR_SUCCESS}]✔ FireBox configured with {provider_choice}![/]")
+    console.print(f"[bold {COLOR_SUCCESS}]✔ FireBox configured with [bold white]{prov_name}[/] [dim](Model: {config_mgr.app_config.active_model})[/]![/]\n")
 
 
 # ==========================================
@@ -564,16 +697,47 @@ def grp_provider():
     pass
 
 @grp_provider.command("add")
-@click.argument("name")
+@click.argument("name", required=False)
 @click.argument("key", required=False)
 def cmd_provider_add(name, key):
-    """Configure API key for an AI provider."""
+    """Configure API key for an AI provider by Number (1-19) or name."""
     console = get_console()
     config_mgr = get_config()
+    reg = get_provider_registry()
+    catalog = reg.get_catalog()
+
+    if not name:
+        _list_providers(console, reg)
+        name = click.prompt(
+            f"Select Provider by Number (1-{len(catalog)}) or name",
+            default="1",
+        )
+
+    resolved_id = reg.resolve_provider_choice(str(name))
+    if not resolved_id:
+        console.print(f"[bold {COLOR_ERROR}]✖ Unknown provider '{name}'.[/]")
+        return
+
+    prov_meta = next((c for c in catalog if c["id"] == resolved_id), None)
+    prov_name = prov_meta["name"] if prov_meta else resolved_id.capitalize()
+    prov_index = prov_meta["index"] if prov_meta else None
+    default_model = prov_meta.get("default_model", "default") if prov_meta else "default"
+
     if not key:
-        key = click.prompt(f"Enter API key for {name}", hide_input=True)
-    config_mgr.credentials.set_key(name, key)
-    console.print(f"[bold {COLOR_SUCCESS}]✔ Saved credentials for {name}[/]")
+        console.print(f"[dim {COLOR_GRAY_LIGHT}]Paste or enter your API key below. The key will be visibly shown where you enter it:[/]")
+        key = click.prompt(f"Enter API Key for {prov_name}", hide_input=False)
+
+    if key:
+        config_mgr.credentials.set_key(resolved_id, key)
+        _display_key_confirmation_card(
+            console=console,
+            provider_name=prov_name,
+            provider_id=resolved_id,
+            index_num=prov_index,
+            key=key,
+            default_model=default_model,
+        )
+        console.print(f"[bold {COLOR_SUCCESS}]✔ Successfully saved API credentials for {prov_name} (#{prov_index})![/]")
 
 @grp_provider.command("test")
 @click.argument("name")

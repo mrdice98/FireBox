@@ -1,11 +1,10 @@
 """
-Diff Viewer for FireBox.
-Unified and side-by-side terminal syntax-highlighted diffs with fire accents.
+Diff Viewer for FireBox & Burner Engine.
+Unified and side-by-side terminal syntax-highlighted diffs with subtle borders.
 """
 
 from rich.console import Console
 from rich.panel import Panel
-from rich.table import Table
 from rich.text import Text
 from rich.syntax import Syntax
 from rich.box import ROUNDED
@@ -13,11 +12,12 @@ import difflib
 
 from firebox.ui.theme import (
     get_console,
-    COLOR_FIRE_FLAME,
-    COLOR_FIRE_GOLD,
+    COLOR_BORDER,
+    COLOR_BLUE,
+    COLOR_ORANGE,
     COLOR_SUCCESS,
     COLOR_ERROR,
-    COLOR_ASH,
+    COLOR_GRAY,
     COLOR_WHITE,
 )
 
@@ -38,7 +38,7 @@ def render_diff(
     diff = list(difflib.unified_diff(old_lines, new_lines, fromfile=f"a/{filename}", tofile=f"b/{filename}", n=3))
 
     if not diff:
-        console.print(f"[dim]No changes in [bold]{filename}[/][/dim]")
+        console.print(f"[dim {COLOR_GRAY}]No changes in [bold]{filename}[/][/dim]")
         return
 
     diff_text = Text()
@@ -48,9 +48,9 @@ def render_diff(
     for line in diff:
         clean = line.rstrip("\r\n")
         if line.startswith("---") or line.startswith("+++"):
-            diff_text.append(clean + "\n", style="bold " + COLOR_FIRE_GOLD)
+            diff_text.append(clean + "\n", style=f"bold {COLOR_GRAY}")
         elif line.startswith("@@"):
-            diff_text.append(clean + "\n", style="bold cyan")
+            diff_text.append(clean + "\n", style=f"bold {COLOR_BLUE}")
         elif line.startswith("+"):
             diff_text.append(clean + "\n", style=f"bold {COLOR_SUCCESS}")
             additions += 1
@@ -58,13 +58,14 @@ def render_diff(
             diff_text.append(clean + "\n", style=f"bold {COLOR_ERROR}")
             deletions += 1
         else:
-            diff_text.append(clean + "\n", style="dim " + COLOR_WHITE)
+            diff_text.append(clean + "\n", style=f"dim {COLOR_WHITE}")
 
     header = title or f"Diff: {filename} (+{additions} / -{deletions})"
     panel = Panel(
         diff_text,
-        title=f"[bold {COLOR_FIRE_FLAME}]{header}[/]",
-        border_style=COLOR_FIRE_FLAME,
+        title=f"[bold {COLOR_BLUE}]{header}[/]",
+        title_align="left",
+        border_style=COLOR_BORDER,
         box=ROUNDED,
     )
     console.print(panel)
@@ -75,7 +76,8 @@ def format_file_preview(filename: str, content: str, language: str = "text", lin
     syntax = Syntax(content, language, theme="monokai", line_numbers=line_numbers, word_wrap=True)
     return Panel(
         syntax,
-        title=f"[bold {COLOR_FIRE_GOLD}]📄 {filename}[/]",
-        border_style=COLOR_FIRE_FLAME,
+        title=f"[bold {COLOR_BLUE}]📄 {filename}[/]",
+        title_align="left",
+        border_style=COLOR_BORDER,
         box=ROUNDED,
     )

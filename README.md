@@ -91,16 +91,19 @@ firebox doctor
 ```
 
 ### 5. Running the Setup Wizard (`firebox setup`)
-Easily configure your primary AI provider and API keys via the interactive wizard or command-line flags:
+Easily configure your primary AI provider and API keys via the interactive wizard (select provider by **Number 1-19**), or via direct command-line flags. When typing or pasting your API key, it is visibly shown where you enter it with immediate registration card confirmation:
 ```bash
-# Interactive setup wizard
+# Interactive setup wizard (prompts with numbered providers list 1-19)
 firebox setup
 
-# Or non-interactive scripted configuration
-firebox setup --provider mock
-firebox setup --provider openai --key sk-...
-firebox setup --provider anthropic --key sk-ant-...
-firebox setup --provider gemini --key AIza...
+# Choose provider by Number (e.g., #1 for OpenAI, #7 for Perplexity, #9 for SambaNova)
+firebox setup -p 1 -k sk-proj-...
+firebox setup -p 7 -k pplx-...
+firebox setup -p 9 -k samba-...
+
+# Or configure via provider add
+firebox provider add 1 sk-proj-...
+firebox provider add 7 pplx-...
 ```
 
 ---
@@ -110,14 +113,14 @@ firebox setup --provider gemini --key AIza...
 FireBox includes a test suite covering the CLI, tools, safety permissions, providers, and agent loop:
 
 ```powershell
-# Run the complete test suite (24 tests)
+# Run the complete test suite (27+ tests)
 python -m pytest tests/ -v
 ```
 
-All 24 automated tests pass:
+All automated tests pass:
 - `tests/test_agent_engine.py`: Multi-turn loop, planning, modes, context, and sessions.
-- `tests/test_cli.py`: CLI version, help, doctor, providers, models, tools, permissions, analyze, and init.
-- `tests/test_providers.py`: Provider registry, model switching, mock simulator, and streaming.
+- `tests/test_cli.py`: CLI version, help, doctor, providers (numbered 1-19), setup by number, visible key registration, models, tools, permissions, analyze, and init.
+- `tests/test_providers.py`: Provider registry, catalog resolution by number, model switching, mock simulator, Perplexity, Cohere, SambaNova, Qwen, and streaming.
 - `tests/test_safety.py`: Workspace isolation, sensitive file protection, risk assessment, and rollback.
 - `tests/test_tools.py`: File tools, search tools, project detection, and dependency inspection.
 
@@ -127,8 +130,9 @@ All 24 automated tests pass:
 
 | Feature | Capabilities |
 | :--- | :--- |
-| **Terminal Aesthetics** | Cinematic fire particle animations, flame/gold gradients, dark charcoal background, syntax highlighting, diff viewer |
-| **15+ AI Providers** | OpenAI, Anthropic Claude 3.5/3.7 (Hybrid Reasoning), Google Gemini 2.0 Flash/Pro, DeepSeek V3/R1, Groq, OpenRouter, Mistral, xAI, Together AI, Fireworks, Cerebras, NVIDIA NIM, Ollama, LM Studio, and offline Mock Simulator |
+| **Terminal Aesthetics** | Modern OpenCode/Copilot-inspired minimal interface, subtle gray borders, blue navigation accents, orange Burner engine, syntax highlighting, diff viewer |
+| **19 AI Providers (Numbered 1-19)** | OpenAI, Anthropic Claude 3.5/3.7, Google Gemini 2.0, DeepSeek V3/R1, Groq LPU, OpenRouter, **Perplexity AI**, **Cohere**, **SambaNova Systems**, **Alibaba Cloud Qwen**, Mistral, xAI, Together AI, Fireworks, Cerebras, NVIDIA NIM, Ollama, LM Studio, and offline Mock Simulator |
+| **Visible API Key Input** | Secure yet transparent entry (`hide_input=False`) with immediate on-screen visual confirmation card displaying provider name, index, key, model, and secure storage status |
 | **5 Agent Modes** | `ask` (read-only Q&A), `plan` (milestone roadmap), `build` (direct code generation), `autonomous` (self-healing loop), `review` (deep architectural audit) |
 | **19 Built-in Tools** | `read_file`, `write_file`, `edit_file`, `list_dir`, `delete_file`, `file_search`, `text_search`, `code_symbol_search`, `shell_exec`, `run_tests`, `run_build`, `git_status`, `git_diff`, `git_commit`, `git_log`, `detect_project`, `inspect_dependencies`, `web_search`, `fetch_url` |
 | **Safety & Confinement** | Workspace boundary enforcement, sensitive credential blacklist, pre-execution backups, `/undo` instant rollback, append-only audit trail |

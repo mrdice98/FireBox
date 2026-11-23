@@ -31,6 +31,9 @@ class ConfigManager:
                 candidate = Path.home() / ".firebox"
                 try:
                     candidate.mkdir(parents=True, exist_ok=True)
+                    test_file = candidate / ".perm_check"
+                    test_file.write_text("ok", encoding="utf-8")
+                    test_file.unlink(missing_ok=True)
                     base_dir = candidate
                 except (PermissionError, OSError):
                     base_dir = Path.cwd() / ".firebox"
@@ -174,6 +177,49 @@ class ConfigManager:
                     ModelProfile(id="deepseek-reasoner", name="DeepSeek R1", provider="deepseek", context_window=64000, supports_reasoning=True),
                 ],
             ),
+            "perplexity": ProviderConfig(
+                name="Perplexity AI",
+                provider_type="perplexity",
+                base_url="https://api.perplexity.ai",
+                default_model="sonar-pro",
+                models=[
+                    ModelProfile(id="sonar-pro", name="Sonar Pro (Search & Reasoning)", provider="perplexity", context_window=128000, is_default=True),
+                    ModelProfile(id="sonar", name="Sonar", provider="perplexity", context_window=128000),
+                    ModelProfile(id="sonar-reasoning", name="Sonar Reasoning", provider="perplexity", context_window=128000, supports_reasoning=True),
+                ],
+            ),
+            "cohere": ProviderConfig(
+                name="Cohere",
+                provider_type="cohere",
+                base_url="https://api.cohere.ai/v1",
+                default_model="command-r-plus",
+                models=[
+                    ModelProfile(id="command-r-plus", name="Command R+", provider="cohere", context_window=128000, is_default=True),
+                    ModelProfile(id="command-r", name="Command R", provider="cohere", context_window=128000),
+                ],
+            ),
+            "sambanova": ProviderConfig(
+                name="SambaNova Systems",
+                provider_type="sambanova",
+                base_url="https://api.sambanova.ai/v1",
+                default_model="Meta-Llama-3.3-70B-Instruct",
+                models=[
+                    ModelProfile(id="Meta-Llama-3.3-70B-Instruct", name="Llama 3.3 70B (SambaNova)", provider="sambanova", context_window=128000, is_default=True),
+                    ModelProfile(id="Qwen2.5-Coder-32B-Instruct", name="Qwen 2.5 Coder 32B (SambaNova)", provider="sambanova", context_window=32768),
+                    ModelProfile(id="DeepSeek-R1-Distill-Llama-70B", name="DeepSeek R1 Distill 70B (SambaNova)", provider="sambanova", context_window=128000, supports_reasoning=True),
+                ],
+            ),
+            "qwen": ProviderConfig(
+                name="Alibaba Cloud Qwen",
+                provider_type="qwen",
+                base_url="https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+                default_model="qwen-plus",
+                models=[
+                    ModelProfile(id="qwen-plus", name="Qwen Plus", provider="qwen", context_window=128000, is_default=True),
+                    ModelProfile(id="qwen-max", name="Qwen Max", provider="qwen", context_window=128000),
+                    ModelProfile(id="qwen2.5-coder-32b-instruct", name="Qwen 2.5 Coder 32B", provider="qwen", context_window=128000),
+                ],
+            ),
             "ollama": ProviderConfig(
                 name="Ollama (Local)",
                 provider_type="ollama",
@@ -196,22 +242,54 @@ class ConfigManager:
             ),
         }
 
+    def _fallback_to_cwd(self):
+        """Reroute configuration directory to local workspace directory."""
+        self.base_dir = (Path.cwd() / ".firebox").resolve()
+        self.sessions_dir = self.base_dir / "sessions"
+        self.projects_dir = self.base_dir / "projects"
+        self.plugins_dir = self.base_dir / "plugins"
+        self.tools_dir = self.base_dir / "tools"
+        self.logs_dir = self.base_dir / "logs"
+        self.cache_dir = self.base_dir / "cache"
+        self.memory_dir = self.base_dir / "memory"
+        self.backups_dir = self.base_dir / "backups"
+        self.config_file = self.base_dir / "config.json"
+        self.providers_file = self.base_dir / "providers.json"
+        self.permissions_file = self.base_dir / "permissions.json"
+        self._ensure_directories()
+
     def save_app_config(self):
         """Persist app configuration."""
-        self.config_file.write_text(
-            json.dumps(self.app_config.model_dump(), indent=2), encoding="utf-8"
-        )
+        try:
+            self.config_file.write_text(
+                json.dumps(self.app_config.model_dump(), indent=2), encoding="utf-8"
+            )
+        except (PermissionError, OSError):
+            self._fallback_to_cwd()
+            self.config_file.write_text(
+                json.dumps(self.app_config.model_dump(), indent=2), encoding="utf-8"
+            )
 
     def save_providers(self):
         """Persist providers configuration."""
         dump = {k: v.model_dump() for k, v in self.providers.items()}
-        self.providers_file.write_text(json.dumps(dump, indent=2), encoding="utf-8")
+        try:
+            self.providers_file.write_text(json.dumps(dump, indent=2), encoding="utf-8")
+        except (PermissionError, OSError):
+            self._fallback_to_cwd()
+            self.providers_file.write_text(json.dumps(dump, indent=2), encoding="utf-8")
 
     def save_permissions(self):
         """Persist permissions configuration."""
-        self.permissions_file.write_text(
-            json.dumps(self.permissions.model_dump(), indent=2), encoding="utf-8"
-        )
+        try:
+            self.permissions_file.write_text(
+                json.dumps(self.permissions.model_dump(), indent=2), encoding="utf-8"
+            )
+        except (PermissionError, OSError):
+            self._fallback_to_cwd()
+            self.permissions_file.write_text(
+                json.dumps(self.permissions.model_dump(), indent=2), encoding="utf-8"
+            )
 
     def reset_to_defaults(self):
         """Reset all configuration to fresh defaults."""

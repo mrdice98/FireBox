@@ -50,3 +50,18 @@ def test_provider_registry():
     # Switch active provider
     reg.set_active_provider("mock", model="firebox-sim-1.0")
     assert reg.get_provider("mock").name == "Mock/Offline"
+
+    # Test numbered resolution
+    assert reg.resolve_provider_choice("1") == "openai"
+    assert reg.resolve_provider_choice("2") == "anthropic"
+    assert reg.resolve_provider_choice("3") == "gemini"
+    assert reg.resolve_provider_choice("7") == "perplexity"
+    assert reg.resolve_provider_choice("8") == "cohere"
+    assert reg.resolve_provider_choice("9") == "sambanova"
+    assert reg.resolve_provider_choice("10") == "qwen"
+
+    # Check new providers exist
+    assert reg.get_provider("perplexity") is not None
+    assert reg.get_provider("cohere") is not None
+    assert reg.get_provider("sambanova") is not None
+    assert reg.get_provider("qwen") is not None

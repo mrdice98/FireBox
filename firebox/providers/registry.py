@@ -82,7 +82,43 @@ class ProviderRegistry:
             default_model="deepseek-chat",
         )
 
-        # 7. Mistral
+        # 7. Perplexity AI (New!)
+        perplexity_key = creds.get_key("perplexity")
+        self._instances["perplexity"] = OpenAICompatibleProvider(
+            name="Perplexity AI",
+            api_key=perplexity_key,
+            base_url="https://api.perplexity.ai",
+            default_model="sonar-pro",
+        )
+
+        # 8. Cohere (New!)
+        cohere_key = creds.get_key("cohere")
+        self._instances["cohere"] = OpenAICompatibleProvider(
+            name="Cohere",
+            api_key=cohere_key,
+            base_url="https://api.cohere.ai/v1",
+            default_model="command-r-plus",
+        )
+
+        # 9. SambaNova Cloud (New!)
+        sambanova_key = creds.get_key("sambanova")
+        self._instances["sambanova"] = OpenAICompatibleProvider(
+            name="SambaNova Systems",
+            api_key=sambanova_key,
+            base_url="https://api.sambanova.ai/v1",
+            default_model="Meta-Llama-3.3-70B-Instruct",
+        )
+
+        # 10. Alibaba Cloud Qwen (New!)
+        qwen_key = creds.get_key("qwen")
+        self._instances["qwen"] = OpenAICompatibleProvider(
+            name="Alibaba Cloud Qwen",
+            api_key=qwen_key,
+            base_url="https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+            default_model="qwen-plus",
+        )
+
+        # 11. Mistral
         mistral_key = creds.get_key("mistral")
         self._instances["mistral"] = OpenAICompatibleProvider(
             name="Mistral",
@@ -91,7 +127,7 @@ class ProviderRegistry:
             default_model="mistral-large-latest",
         )
 
-        # 8. xAI (Grok)
+        # 12. xAI (Grok)
         xai_key = creds.get_key("xai")
         self._instances["xai"] = OpenAICompatibleProvider(
             name="xAI",
@@ -100,7 +136,7 @@ class ProviderRegistry:
             default_model="grok-2-latest",
         )
 
-        # 9. Together AI
+        # 13. Together AI
         together_key = creds.get_key("together")
         self._instances["together"] = OpenAICompatibleProvider(
             name="Together AI",
@@ -109,7 +145,7 @@ class ProviderRegistry:
             default_model="meta-llama/Llama-3.3-70B-Instruct-Turbo",
         )
 
-        # 10. Fireworks AI
+        # 14. Fireworks AI
         fireworks_key = creds.get_key("fireworks")
         self._instances["fireworks"] = OpenAICompatibleProvider(
             name="Fireworks AI",
@@ -118,7 +154,7 @@ class ProviderRegistry:
             default_model="accounts/fireworks/models/llama-v3p3-70b-instruct",
         )
 
-        # 11. Cerebras
+        # 15. Cerebras
         cerebras_key = creds.get_key("cerebras")
         self._instances["cerebras"] = OpenAICompatibleProvider(
             name="Cerebras",
@@ -127,7 +163,7 @@ class ProviderRegistry:
             default_model="llama3.1-70b",
         )
 
-        # 12. NVIDIA NIM
+        # 16. NVIDIA NIM
         nvidia_key = creds.get_key("nvidia")
         self._instances["nvidia"] = OpenAICompatibleProvider(
             name="NVIDIA NIM",
@@ -136,7 +172,7 @@ class ProviderRegistry:
             default_model="meta/llama-3.3-70b-instruct",
         )
 
-        # 13. Ollama (Local)
+        # 17. Ollama (Local)
         self._instances["ollama"] = OpenAICompatibleProvider(
             name="Ollama (Local)",
             api_key=None,
@@ -144,7 +180,7 @@ class ProviderRegistry:
             default_model="llama3.1:latest",
         )
 
-        # 14. LM Studio (Local)
+        # 18. LM Studio (Local)
         self._instances["lmstudio"] = OpenAICompatibleProvider(
             name="LM Studio (Local)",
             api_key=None,
@@ -152,7 +188,7 @@ class ProviderRegistry:
             default_model="local-model",
         )
 
-        # 15. Mock/Offline Simulator
+        # 19. Mock/Offline Simulator
         self._instances["mock"] = MockProvider()
 
     def get_provider(self, name: Optional[str] = None) -> BaseProvider:
@@ -200,6 +236,56 @@ class ProviderRegistry:
                 "is_active": (key == self.config_mgr.app_config.active_provider),
             })
         return result
+
+    @classmethod
+    def get_catalog(cls) -> List[Dict[str, Any]]:
+        """Return the official numbered provider catalog."""
+        return PROVIDER_CATALOG
+
+    @classmethod
+    def resolve_provider_choice(cls, user_input: str) -> Optional[str]:
+        """Resolve a user selection (either by index number or provider name/id) to a valid provider ID."""
+        clean = user_input.strip()
+        if not clean:
+            return None
+
+        # Check by numeric index (e.g. "1", "3", "7")
+        if clean.isdigit():
+            idx = int(clean)
+            for item in PROVIDER_CATALOG:
+                if item["index"] == idx:
+                    return item["id"]
+
+        # Check by ID or Name
+        clean_lower = clean.lower()
+        for item in PROVIDER_CATALOG:
+            if item["id"].lower() == clean_lower or item["name"].lower() == clean_lower:
+                return item["id"]
+
+        return clean_lower
+
+
+PROVIDER_CATALOG = [
+    {"index": 1, "id": "openai", "name": "OpenAI", "models": "gpt-4o, o1, o3-mini", "default_model": "gpt-4o", "requires_key": True},
+    {"index": 2, "id": "anthropic", "name": "Anthropic", "models": "claude-3-7-sonnet, claude-3-5-sonnet", "default_model": "claude-3-7-sonnet-20250219", "requires_key": True},
+    {"index": 3, "id": "gemini", "name": "Google Gemini", "models": "gemini-2.0-flash, gemini-2.0-pro", "default_model": "gemini-2.0-flash", "requires_key": True},
+    {"index": 4, "id": "deepseek", "name": "DeepSeek", "models": "deepseek-chat (V3), deepseek-reasoner (R1)", "default_model": "deepseek-chat", "requires_key": True},
+    {"index": 5, "id": "groq", "name": "Groq LPU", "models": "llama-3.3-70b-versatile, deepseek-r1-distill", "default_model": "llama-3.3-70b-versatile", "requires_key": True},
+    {"index": 6, "id": "openrouter", "name": "OpenRouter", "models": "Universal multi-model gateway", "default_model": "anthropic/claude-3.7-sonnet", "requires_key": True},
+    {"index": 7, "id": "perplexity", "name": "Perplexity AI", "models": "sonar-pro, sonar, sonar-reasoning", "default_model": "sonar-pro", "requires_key": True},
+    {"index": 8, "id": "cohere", "name": "Cohere", "models": "command-r-plus, command-r", "default_model": "command-r-plus", "requires_key": True},
+    {"index": 9, "id": "sambanova", "name": "SambaNova Systems", "models": "Meta-Llama-3.3-70B, Qwen2.5-Coder", "default_model": "Meta-Llama-3.3-70B-Instruct", "requires_key": True},
+    {"index": 10, "id": "qwen", "name": "Alibaba Cloud Qwen", "models": "qwen-plus, qwen-max, qwen2.5-coder", "default_model": "qwen-plus", "requires_key": True},
+    {"index": 11, "id": "mistral", "name": "Mistral AI", "models": "mistral-large-latest, codestral", "default_model": "mistral-large-latest", "requires_key": True},
+    {"index": 12, "id": "xai", "name": "xAI (Grok)", "models": "grok-2-latest", "default_model": "grok-2-latest", "requires_key": True},
+    {"index": 13, "id": "together", "name": "Together AI", "models": "meta-llama/Llama-3.3-70B, Qwen 2.5 Coder", "default_model": "meta-llama/Llama-3.3-70B-Instruct-Turbo", "requires_key": True},
+    {"index": 14, "id": "fireworks", "name": "Fireworks AI", "models": "llama-v3p3-70b-instruct", "default_model": "accounts/fireworks/models/llama-v3p3-70b-instruct", "requires_key": True},
+    {"index": 15, "id": "cerebras", "name": "Cerebras", "models": "llama3.1-70b ultra-speed", "default_model": "llama3.1-70b", "requires_key": True},
+    {"index": 16, "id": "nvidia", "name": "NVIDIA NIM", "models": "meta/llama-3.3-70b-instruct", "default_model": "meta/llama-3.3-70b-instruct", "requires_key": True},
+    {"index": 17, "id": "ollama", "name": "Ollama (Local)", "models": "Local offline models (e.g. llama3.1)", "default_model": "llama3.1:latest", "requires_key": False},
+    {"index": 18, "id": "lmstudio", "name": "LM Studio (Local)", "models": "Local desktop models (port 1234)", "default_model": "local-model", "requires_key": False},
+    {"index": 19, "id": "mock", "name": "Mock/Offline Simulator", "models": "firebox-sim-1.0 (Testing)", "default_model": "firebox-sim-1.0", "requires_key": False},
+]
 
 
 _provider_registry = None

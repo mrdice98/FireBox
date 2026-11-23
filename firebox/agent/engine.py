@@ -1,6 +1,7 @@
 """
-FireBox Autonomous Agent Engine.
-Core closed-loop execution engine: Observe -> Plan -> Act -> Verify -> Iterate.
+FireBox Burner Engine.
+Intelligent execution engine: Planning, Reasoning, Tool Selection,
+Execution, Error Recovery, Iteration, Testing, and Validation.
 """
 
 import time
@@ -16,19 +17,28 @@ from firebox.providers.base import BaseProvider, ChatMessage, ChatResponse, Tool
 from firebox.providers.registry import get_provider_registry
 from firebox.tools.registry import get_tool_registry
 from firebox.config.manager import get_config
-from firebox.ui.theme import get_console, COLOR_FIRE_FLAME, COLOR_FIRE_GOLD, COLOR_SUCCESS, COLOR_ERROR
+from firebox.ui.theme import (
+    get_console,
+    COLOR_BORDER,
+    COLOR_BLUE,
+    COLOR_ORANGE,
+    COLOR_SUCCESS,
+    COLOR_ERROR,
+    COLOR_GRAY,
+    COLOR_WHITE,
+)
 from firebox.ui.animations import print_thinking, print_tool_start, print_tool_finish
-from firebox.ui.formatters import render_markdown, render_plan, render_tool_result_card
+from firebox.ui.formatters import render_markdown, render_plan, render_tool_result_card, render_task_complete_card
 
 
-class AgentEngine:
-    """Orchestrates autonomous coding agents across multi-turn tool-calling loops."""
+class BurnerEngine:
+    """The intelligent execution engine behind FireBox."""
 
     def __init__(
         self,
         workspace_root: Optional[Path] = None,
         session_id: Optional[str] = None,
-        mode: AgentMode = AgentMode.AUTONOMOUS,
+        mode: AgentMode = AgentMode.BUILD,
     ):
         if workspace_root is None:
             workspace_root = Path.cwd().resolve()
@@ -91,8 +101,9 @@ class AgentEngine:
         user_input: str,
         stream_callback: Optional[Any] = None,
     ) -> str:
-        """Execute a full autonomous agent turn in response to user input."""
+        """Execute a full Burner closed-loop turn in response to user input."""
         console = get_console()
+        turn_start_time = time.time()
 
         # Append user message
         self.messages.append(ChatMessage(role="user", content=user_input))
@@ -107,10 +118,11 @@ class AgentEngine:
 
         final_response_text = ""
         self.iteration_count = 0
+        executed_tools_count = 0
 
         while self.iteration_count < self.max_iterations:
             self.iteration_count += 1
-            print_thinking(f"Step {self.iteration_count}/{self.max_iterations} — querying model ({model_name})...")
+            print_thinking(f"Step {self.iteration_count}/{self.max_iterations} · querying {model_name}...")
 
             try:
                 # Call provider
@@ -125,9 +137,10 @@ class AgentEngine:
                 console.print(f"[bold {COLOR_ERROR}]✖ {err_msg}[/]")
                 return err_msg
 
-            # Print reasoning if available
+            # Print brief reasoning summary if available
             if response.reasoning_content:
-                console.print(f"[dim {COLOR_FIRE_GOLD}]✦ Reasoning: {response.reasoning_content[:200]}...[/dim]")
+                reasoning_summary = response.reasoning_content.splitlines()[0][:120]
+                console.print(f"[dim {COLOR_GRAY}]✦ Reasoning:[/] [dim {COLOR_WHITE}]{reasoning_summary}...[/dim]")
 
             # Record assistant turn in history
             self.messages.append(
@@ -142,8 +155,22 @@ class AgentEngine:
             # Case A: Model requested tool calls
             if response.tool_calls:
                 for tc in response.tool_calls:
-                    print_tool_start(tc.name, str(tc.arguments))
+                    executed_tools_count += 1
                     t_start = time.time()
+
+                    # Highlight tool type
+                    tool_obj = self.tool_reg.get_tool(tc.name)
+                    tool_cat = tool_obj.category if tool_obj else "tool"
+                    cat_prefix = {
+                        "file": "📁 File",
+                        "execution": "⚡ Terminal",
+                        "search": "🔍 Search",
+                        "git": "🌿 Git",
+                        "web": "🌐 Web",
+                        "project": "📦 Project",
+                    }.get(tool_cat, "⚡ Tool")
+
+                    print_tool_start(f"{cat_prefix} · {tc.name}", str(tc.arguments))
 
                     # Execute tool
                     tool_res = self.tool_reg.execute_tool(tc.name, tc.arguments)
@@ -163,7 +190,7 @@ class AgentEngine:
                         )
                     )
 
-                # Continue agent loop with tool results
+                # Continue Burner agent loop with tool results
                 continue
 
             # Case B: Model returned plain text response
@@ -183,4 +210,16 @@ class AgentEngine:
             model=model_name,
         )
 
+        # Show task completion if tools were executed
+        if executed_tools_count > 0:
+            total_time = time.time() - turn_start_time
+            render_task_complete_card(
+                f"Burner executed {executed_tools_count} tool action(s) across {self.iteration_count} step(s).",
+                duration_sec=total_time,
+            )
+
         return final_response_text
+
+
+# Backward compatibility alias
+AgentEngine = BurnerEngine

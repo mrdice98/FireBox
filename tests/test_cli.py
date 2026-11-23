@@ -81,3 +81,32 @@ def test_cli_init(tmp_path):
     firebox_md = tmp_path / "FIREBOX.md"
     assert firebox_md.exists()
     assert "FIREBOX PROJECT INSTRUCTIONS" in firebox_md.read_text(encoding="utf-8")
+
+
+def test_cli_setup_by_number():
+    runner = CliRunner()
+    # Test passing provider by number 7 (Perplexity) and visible key
+    result = runner.invoke(main, ["setup", "-p", "7", "-k", "pplx-test-token-777"])
+    assert result.exit_code == 0
+    assert "Perplexity AI" in result.output
+    assert "pplx-test-token-777" in result.output
+    assert "API Credential Registered" in result.output
+
+
+def test_cli_provider_add_by_number():
+    runner = CliRunner()
+    # Test adding key using provider number 9 (SambaNova)
+    result = runner.invoke(main, ["provider", "add", "9", "samba-key-999"])
+    assert result.exit_code == 0
+    assert "SambaNova Systems" in result.output
+    assert "samba-key-999" in result.output
+
+
+def test_cli_new_providers_in_catalog():
+    runner = CliRunner()
+    result = runner.invoke(main, ["providers"])
+    assert result.exit_code == 0
+    assert "Perplexity" in result.output
+    assert "Cohere" in result.output
+    assert "SambaNova" in result.output
+    assert "Qwen" in result.output

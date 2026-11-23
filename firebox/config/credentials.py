@@ -33,6 +33,9 @@ class CredentialManager:
                 candidate = Path.home() / ".firebox"
                 try:
                     candidate.mkdir(parents=True, exist_ok=True)
+                    test_file = candidate / ".perm_check"
+                    test_file.write_text("ok", encoding="utf-8")
+                    test_file.unlink(missing_ok=True)
                     storage_dir = candidate
                 except (PermissionError, OSError):
                     storage_dir = Path.cwd() / ".firebox"
@@ -73,6 +76,10 @@ class CredentialManager:
             "openrouter": "OPENROUTER_API_KEY",
             "groq": "GROQ_API_KEY",
             "deepseek": "DEEPSEEK_API_KEY",
+            "perplexity": "PERPLEXITY_API_KEY",
+            "cohere": "COHERE_API_KEY",
+            "sambanova": "SAMBANOVA_API_KEY",
+            "qwen": "DASHSCOPE_API_KEY",
             "mistral": "MISTRAL_API_KEY",
             "xai": "XAI_API_KEY",
             "together": "TOGETHER_API_KEY",

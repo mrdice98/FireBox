@@ -63,7 +63,7 @@ class ContextManager:
     def build_system_prompt(self, mode: AgentMode = AgentMode.AUTONOMOUS) -> str:
         """Compose the master FireBox system prompt tailored to the active mode."""
         base_prompt = (
-            "You are FireBox, the premier next-generation autonomous AI coding agent.\n"
+            "You are Burner, the intelligent execution engine behind FireBox AI Coding Agent.\n"
             "Tagline: IGNITE YOUR CODE. BURN THROUGH TASKS.\n\n"
             "CORE PRINCIPLES:\n"
             "1. Real Actions: You have access to real tools (file operations, search, shell execution, git, project analysis).\n"
